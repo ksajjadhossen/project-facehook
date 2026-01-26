@@ -5,7 +5,7 @@ import avatar from "../../assets/images/avatars/avatar_1.png";
 // icons
 import homeIcon from "../../assets/icons/home.svg";
 import notificationIcon from "../../assets/icons/notification.svg";
-import logoutIcon from "../../assets/icons/logout.svg";
+import LogOut from "../common/LogOut";
 
 const Header = () => {
   return (
@@ -29,9 +29,7 @@ const Header = () => {
             <img src={notificationIcon} alt="Notification" />
           </button>
 
-          <button className="icon-btn">
-            <img src={logoutIcon} alt="Logout" />
-          </button>
+          <LogOut></LogOut>
 
           <button className="flex-center !ml-8 gap-3">
             <span className="text-lg font-medium lg:text-xl">Sumit</span>

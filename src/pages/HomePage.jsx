@@ -8,11 +8,13 @@ import poster from "../assets/images/poster.png";
 import addPhotoIcon from "../assets/icons/addPhoto.svg";
 import closeIcon from "../assets/icons/close.svg";
 import Header from "../components/Shared/Header";
+import { useAuth } from "../Hooks/useAuth";
 
 const HomePage = () => {
+  const { auth } = useAuth();
+  console.log(auth);
   return (
     <>
-      <Header></Header>
       {/* CREATE POST */}
       <main className="mx-auto max-w-[1020px] py-8">
         <div className="container">
