@@ -1,4 +1,53 @@
+import { useState, useEffect } from "react";
+import useAxios from "../Hooks/useAxios";
+import { useAuth } from "../Hooks/useAuth";
+
 const ProfilePage = () => {
+  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const { api } = useAxios();
+  const { auth } = useAuth();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!auth?.user?.id) return;
+
+      setLoading(true);
+      try {
+        const response = await api.get(
+          `${import.meta.env.VITE_SERVER_BASE_URL}/profile/${auth?.user?.id}`,
+        );
+
+        if (response.data) {
+          setUser(response.data.user);
+          setPosts(response.data.posts);
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error("Fetch Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [auth?.user?.id, api]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen text-white">
+        Fetching your profile data....
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center py-10">Error: {error}</div>;
+  }
+
   return (
     <main className="mx-auto max-w-[1020px] py-8">
       <div className="container">
@@ -7,143 +56,104 @@ const ProfilePage = () => {
           {/* profile image */}
           <div className="relative mb-8 max-h-[180px] max-w-[180px] rounded-full lg:mb-11 lg:max-h-[218px] lg:max-w-[218px]">
             <img
-              className="max-w-full"
-              src="./assets/images/avatars/avatar_1.png"
-              alt="sumit saha"
+              className="max-w-full rounded-full border-2 border-gray-700"
+              src={user?.avatar || "/assets/images/avatars/avatar_1.png"}
+              alt={user?.firstName}
             />
 
             <button className="flex-center absolute bottom-4 right-4 h-7 w-7 rounded-full bg-black/50 hover:bg-black/80">
-              <img src="./assets/icons/edit.svg" alt="Edit" />
+              <img src="/assets/icons/edit.svg" alt="Edit" />
             </button>
           </div>
 
           {/* name , email */}
           <div>
             <h3 className="text-2xl font-semibold text-white lg:text-[28px]">
-              Sumit Saha
+              {user?.firstName} {user?.lastName}
             </h3>
-            <p className="leading-[231%] lg:text-lg">sumitsaha@gmail.com</p>
+            <p className="leading-[231%] lg:text-lg text-gray-400">
+              {user?.email}
+            </p>
           </div>
 
           {/* bio */}
           <div className="mt-4 flex items-start gap-2 lg:mt-6">
             <div className="flex-1">
               <p className="leading-[188%] text-gray-400 lg:text-lg">
-                Sumit is an entrepreneurial visionary known for his exceptional
-                performance and passion for technology and business. He
-                established Analyzen in 2008 while he was a student at
-                Bangladesh University of Engineering & Technology (BUET).
-                Analyzen has since become a top-tier Web and Mobile Application
-                Development firm and the first Digital and Social Media
-                Marketing Agency in Bangladesh.
+                {user?.bio || "No bio available."}
               </p>
+              <span className="text-sm text-lwsGreen mt-2 block">
+                Total Posts: {posts?.length || 0}
+              </span>
             </div>
 
-            {/* Edit Bio button */}
             <button className="flex-center h-7 w-7 rounded-full">
-              <img src="./assets/icons/edit.svg" alt="Edit" />
+              <img src="/assets/icons/edit.svg" alt="Edit" />
             </button>
           </div>
 
           <div className="w-3/4 border-b border-[#3F3F3F] py-6 lg:py-8"></div>
         </div>
-        {/* end profile info */}
 
-        <h4 className="mt-6 text-xl lg:mt-8 lg:text-2xl">Your Posts</h4>
+        <h4 className="mt-6 text-xl lg:mt-8 lg:text-2xl text-white">
+          Your Posts
+        </h4>
 
-        {/* post */}
-        <article className="card mt-6 lg:mt-8">
-          {/* post header */}
-          <header className="flex items-center justify-between gap-4">
-            {/* author info */}
-            <div className="flex items-center gap-3">
-              <img
-                className="max-w-10 max-h-10 rounded-full lg:max-h-[58px] lg:max-w-[58px]"
-                src="./assets/images/avatars/avatar_1.png"
-                alt="avatar"
-              />
-              <div>
-                <h6 className="text-lg lg:text-xl">Sumit Saha</h6>
-                <div className="flex items-center gap-1.5">
-                  <img src="./assets/icons/time.svg" alt="time" />
-                  <span className="text-sm text-gray-400 lg:text-base">
-                    12 min ago
-                  </span>
+        {/* Dynamic Posts Rendering */}
+        {posts?.length > 0 ? (
+          posts.map((post) => (
+            <article
+              key={post.id}
+              className="card mt-6 lg:mt-8 bg-lighterDark p-4 rounded-lg"
+            >
+              <header className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <img
+                    className="max-w-10 max-h-10 rounded-full"
+                    src={user?.avatar || "/assets/images/avatars/avatar_1.png"}
+                    alt="avatar"
+                  />
+                  <div>
+                    <h6 className="text-lg lg:text-xl text-white">
+                      {user?.firstName} {user?.lastName}
+                    </h6>
+                    <div className="flex items-center gap-1.5">
+                      <img src="/assets/icons/time.svg" alt="time" />
+                      <span className="text-sm text-gray-400">12 min ago</span>
+                    </div>
+                  </div>
                 </div>
+              </header>
+
+              <div className="border-b border-[#3F3F3F] py-4 lg:py-5 lg:text-xl text-gray-300">
+                {post?.image && (
+                  <div className="flex items-center justify-center overflow-hidden mb-4">
+                    <img
+                      className="max-w-full rounded"
+                      src={post.image}
+                      alt="post"
+                    />
+                  </div>
+                )}
+                <p>{post?.content}</p>
               </div>
-            </div>
 
-            {/* action dot */}
-            <div className="relative">
-              <button>
-                <img src="./assets/icons/3dots.svg" alt="3dots of Action" />
-              </button>
-
-              <div className="action-modal-container">
-                <button className="action-menu-item hover:text-lwsGreen">
-                  <img src="./assets/icons/edit.svg" alt="Edit" />
-                  Edit
+              {/* Actions */}
+              <div className="flex items-center justify-between py-4">
+                <button className="flex items-center gap-2 text-[#B8BBBF] hover:text-white">
+                  <img src="/assets/icons/like.svg" alt="Like" />
+                  <span>Like</span>
                 </button>
-                <button className="action-menu-item hover:text-red-500">
-                  <img src="./assets/icons/delete.svg" alt="Delete" />
-                  Delete
+                <button className="flex items-center gap-2 text-[#B8BBBF] hover:text-white">
+                  <img src="/assets/icons/comment.svg" alt="Comment" />
+                  <span>Comment ({post?.comments?.length || 0})</span>
                 </button>
               </div>
-            </div>
-          </header>
-
-          {/* post body */}
-          <div className="border-b border-[#3F3F3F] py-4 lg:py-5 lg:text-xl">
-            <div className="flex items-center justify-center overflow-hidden">
-              <img
-                className="max-w-full"
-                src="./assets/images/poster.png"
-                alt="poster"
-              />
-            </div>
-            <p>
-              Grateful for the incredible experience of serving as the President
-              of the Grand Jury board for this year's Digital Marketing Award
-              organized by Bangladesh Brand Forum...
-            </p>
-          </div>
-
-          {/* post actions */}
-          <div className="flex items-center justify-between py-6 lg:px-10 lg:py-8">
-            <button className="flex-center gap-2 text-xs font-bold text-[#B8BBBF] hover:text-white lg:text-sm">
-              <img src="./assets/icons/like.svg" alt="Like" />
-              <span>Like</span>
-            </button>
-
-            <button className="icon-btn space-x-2 px-6 py-3 text-xs lg:px-12 lg:text-sm">
-              <img src="./assets/icons/comment.svg" alt="Comment" />
-              <span>Comment(2)</span>
-            </button>
-
-            <button className="flex-center gap-2 text-xs font-bold text-[#B8BBBF] hover:text-white lg:text-sm">
-              <img src="./assets/icons/share.svg" alt="Share" />
-              <span>Share</span>
-            </button>
-          </div>
-
-          {/* comment section */}
-          <div>
-            <div className="flex-center mb-3 gap-2 lg:gap-4">
-              <img
-                className="max-w-7 max-h-7 rounded-full lg:max-h-[34px] lg:max-w-[34px]"
-                src="./assets/images/avatars/avatar_1.png"
-                alt="avatar"
-              />
-              <div className="flex-1">
-                <input
-                  type="text"
-                  className="h-8 w-full rounded-full bg-lighterDark px-4 text-xs focus:outline-none sm:h-[38px]"
-                  placeholder="What's on your mind?"
-                />
-              </div>
-            </div>
-          </div>
-        </article>
+            </article>
+          ))
+        ) : (
+          <p className="text-gray-500 mt-4">You haven't posted anything yet.</p>
+        )}
       </div>
     </main>
   );
