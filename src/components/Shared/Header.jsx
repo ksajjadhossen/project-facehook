@@ -8,9 +8,13 @@ import notificationIcon from "../../assets/icons/notification.svg";
 import LogOut from "../common/LogOut";
 import { useAuth } from "../../Hooks/useAuth";
 import { Link } from "react-router-dom";
+import { useProfile } from "../../Hooks/useProfile";
 
 const Header = () => {
   const { auth } = useAuth();
+  const { state } = useProfile();
+
+  const user = state?.user ?? auth?.user;
   return (
     <nav className="sticky top-0 z-50 border-b border-[#3F3F3F] bg-[#1E1F24] py-4">
       <div className="container flex flex-col items-center justify-between gap-6 sm:flex-row">
@@ -40,13 +44,13 @@ const Header = () => {
           >
             {/* নাম - এখন এটিও ক্লিকেবল */}
             <span className="text-lg font-medium lg:text-xl">
-              {auth?.user?.firstName} {auth?.user?.lastName}
+              {user?.firstName} {user?.lastName}
             </span>
 
             {/* ছবি - ডাইনামিক করার চেষ্টা করুন */}
             <img
               className="max-h-[32px] max-w-[32px] rounded-full lg:max-h-[44px] lg:max-w-[44px]"
-              src={auth?.user?.avatar || avatar} // যদি ইউজারের ছবি থাকে তবে সেটা, নাহলে ডিফল্ট
+              src={`${import.meta.env.VITE_SERVER_BASE_URL}/${user.avatar}`} // যদি ইউজারের ছবি থাকে তবে সেটা, নাহলে ডিফল্ট
               alt="Profile"
             />
           </Link>

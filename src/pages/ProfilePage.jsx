@@ -1,42 +1,46 @@
 import { useState, useEffect } from "react";
 import useAxios from "../Hooks/useAxios";
 import { useAuth } from "../Hooks/useAuth";
+import { useProfile } from "../Hooks/useProfile";
+import { actions } from "../actions";
+import ProfileImage from "../components/profile/ProfileImage";
+import Bio from "../components/profile/Bio";
+import ProfileInfo from "../components/profile/ProfileInfo";
 
 const ProfilePage = () => {
-  const [user, setUser] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
+  const { state, dispatch } = useProfile();
   const { api } = useAxios();
   const { auth } = useAuth();
 
+  const user = state?.user;
+  const posts = state?.posts;
+
   useEffect(() => {
+    dispatch({ type: actions.profile.DATA_FETCHING });
     const fetchProfile = async () => {
       if (!auth?.user?.id) return;
 
-      setLoading(true);
       try {
         const response = await api.get(
           `${import.meta.env.VITE_SERVER_BASE_URL}/profile/${auth?.user?.id}`,
         );
 
-        if (response.data) {
-          setUser(response.data.user);
-          setPosts(response.data.posts);
+        if (response.status === 200) {
+          dispatch({ type: actions.profile.DATA_FETCHED, data: response.data });
         }
       } catch (err) {
-        setError(err.message);
+        dispatch({
+          type: actions.profile.DATA_FETCH_ERROR,
+          error: err.message,
+        });
         console.error("Fetch Error:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [auth?.user?.id, api]);
+  }, []);
 
-  if (loading) {
+  if (state?.loading) {
     return (
       <div className="flex justify-center items-center h-screen text-white">
         Fetching your profile data....
@@ -44,56 +48,19 @@ const ProfilePage = () => {
     );
   }
 
-  if (error) {
-    return <div className="text-red-500 text-center py-10">Error: {error}</div>;
+  if (state?.error) {
+    return (
+      <div className="text-red-500 text-center py-10">
+        Error: {state?.error}
+      </div>
+    );
   }
 
   return (
     <main className="mx-auto max-w-[1020px] py-8">
       <div className="container">
         {/* profile info */}
-        <div className="flex flex-col items-center py-8 text-center">
-          {/* profile image */}
-          <div className="relative mb-8 max-h-[180px] max-w-[180px] rounded-full lg:mb-11 lg:max-h-[218px] lg:max-w-[218px]">
-            <img
-              className="max-w-full rounded-full border-2 border-gray-700"
-              src={user?.avatar || "/assets/images/avatars/avatar_1.png"}
-              alt={user?.firstName}
-            />
-
-            <button className="flex-center absolute bottom-4 right-4 h-7 w-7 rounded-full bg-black/50 hover:bg-black/80">
-              <img src="/assets/icons/edit.svg" alt="Edit" />
-            </button>
-          </div>
-
-          {/* name , email */}
-          <div>
-            <h3 className="text-2xl font-semibold text-white lg:text-[28px]">
-              {user?.firstName} {user?.lastName}
-            </h3>
-            <p className="leading-[231%] lg:text-lg text-gray-400">
-              {user?.email}
-            </p>
-          </div>
-
-          {/* bio */}
-          <div className="mt-4 flex items-start gap-2 lg:mt-6">
-            <div className="flex-1">
-              <p className="leading-[188%] text-gray-400 lg:text-lg">
-                {user?.bio || "No bio available."}
-              </p>
-              <span className="text-sm text-lwsGreen mt-2 block">
-                Total Posts: {posts?.length || 0}
-              </span>
-            </div>
-
-            <button className="flex-center h-7 w-7 rounded-full">
-              <img src="/assets/icons/edit.svg" alt="Edit" />
-            </button>
-          </div>
-
-          <div className="w-3/4 border-b border-[#3F3F3F] py-6 lg:py-8"></div>
-        </div>
+        <ProfileInfo></ProfileInfo>
 
         <h4 className="mt-6 text-xl lg:mt-8 lg:text-2xl text-white">
           Your Posts
